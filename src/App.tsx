@@ -24,20 +24,18 @@ export default function App() {
       setShowIncompatible(false);
       setError(null);
     } else {
-      // Only show error if we weren't already showing a device (to avoid interruption)
-      if (!selectedDevice) {
-        setSelectedDevice(null);
-        setShowIncompatible(true);
-        setError("No pude identificar el dispositivo. Probá acercarte o mejorar la iluminación.");
-      }
+      setSelectedDevice(null);
+      setShowIncompatible(true);
+      setError("No pude identificar el dispositivo. Probá acercarte o mejorar la iluminación.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1115] flex flex-col font-sans selection:bg-emerald-500 selection:text-zinc-950 overflow-hidden" id="app-root">
+    <div className="min-h-screen bg-zinc-950 flex flex-col font-sans selection:bg-emerald-500 selection:text-zinc-950 overflow-hidden" id="app-root">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 blur-[120px] rounded-full" />
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[100px] rounded-full" />
       </div>
 
       <Header />
@@ -57,12 +55,11 @@ export default function App() {
                 onDetect={handleDetection}
                 isAnalyzing={isAnalyzing}
                 setIsAnalyzing={setIsAnalyzing}
-                active={!selectedDevice}
               />
               
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-4 text-white/40 text-[10px] uppercase tracking-widest font-bold max-w-sm">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 text-emerald-400" />
-                <p>Análisis automático activo</p>
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-4 text-white/60 text-sm max-w-sm">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+                <p>Apuntá a heladeras, aires, lavarropas, TV, termotanques o cargadores.</p>
               </div>
             </motion.div>
           ) : showIncompatible ? (

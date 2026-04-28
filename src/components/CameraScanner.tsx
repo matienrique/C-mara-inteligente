@@ -7,10 +7,9 @@ interface CameraScannerProps {
   onDetect: (result: GeminiResponse) => void;
   isAnalyzing: boolean;
   setIsAnalyzing: (val: boolean) => void;
-  active: boolean;
 }
 
-export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, active }: CameraScannerProps) {
+export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }: CameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -61,7 +60,7 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, a
   };
 
   const handleCapture = async () => {
-    if (!videoRef.current || !canvasRef.current || isAnalyzing || !active) return;
+    if (!videoRef.current || !canvasRef.current || isAnalyzing) return;
 
     setIsAnalyzing(true);
     const video = videoRef.current;
@@ -97,8 +96,7 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, a
       if (result) {
         onDetect(result);
       } else {
-        // Silent failure for auto-scan to keep user experience smooth
-        console.log("Auto-scan didn't yield result");
+        setError("Error al analizar. Probá de nuevo.");
       }
     }
     setIsAnalyzing(false);
@@ -112,37 +110,26 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, a
     return () => stopCamera();
   }, [stream, permissionsGranted]);
 
-  // Auto-capture interval
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (permissionsGranted && active && !isAnalyzing) {
-      interval = setInterval(() => {
-        handleCapture();
-      }, 5000); // Attempt detection every 5 seconds
-    }
-    return () => clearInterval(interval);
-  }, [permissionsGranted, active, isAnalyzing]);
-
   if (!permissionsGranted) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-white/5 shadow-2xl space-y-6" id="permissions-view">
-        <div className="w-20 h-20 bg-emerald-400/10 rounded-full flex items-center justify-center border border-emerald-400/20">
+      <div className="flex flex-col items-center justify-center p-8 bg-zinc-900 rounded-3xl border border-white/5 shadow-2xl space-y-6" id="permissions-view">
+        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center">
           <Camera className="w-10 h-10 text-emerald-400" />
         </div>
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold text-white tracking-tight">Activá tu Cámara IA</h2>
-          <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold max-w-xs">
-            La imagen se procesa en tiempo real para detección automática.
+          <h2 className="text-xl font-bold text-white">Activá tu Cámara Inteligente</h2>
+          <p className="text-white/60 text-sm max-w-xs">
+            La imagen se usa solo para identificar el dispositivo y mostrar recomendaciones. No guardamos tus datos.
           </p>
         </div>
         <button
           onClick={startCamera}
-          className="w-full py-4 bg-emerald-500 text-zinc-950 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+          className="w-full py-4 bg-emerald-500 text-zinc-950 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
           id="activate-camera-btn"
         >
-          <Camera className="w-5 h-5" /> Comenzar Escaneo
+          <Camera className="w-5 h-5" /> Activar Cámara
         </button>
-        {error && <p className="text-red-400 text-xs italic text-center max-w-[200px]">{error}</p>}
+        {error && <p className="text-red-400 text-xs italic">{error}</p>}
       </div>
     );
   }
@@ -173,26 +160,39 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, a
           />
           
           <div className="absolute inset-0 flex items-center justify-center uppercase">
-            <div className="flex flex-col items-center gap-3">
-              {isAnalyzing && (
-                <RefreshCcw className="w-6 h-6 text-emerald-400 animate-spin" />
-              )}
-              <p className="text-[10px] tracking-[0.4em] text-emerald-400 font-bold bg-black/60 px-6 py-2 rounded-lg backdrop-blur-md border border-emerald-500/30 whitespace-nowrap">
-                {isAnalyzing ? "Analizando dispositivo..." : "Enfoque el dispositivo"}
-              </p>
-            </div>
+            <p className="text-[10px] tracking-[0.4em] text-emerald-400 font-bold bg-black/60 px-6 py-2 rounded-lg backdrop-blur-md border border-emerald-500/30 whitespace-nowrap">
+              Enfoque el dispositivo
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Manual Refresh (Optional/Small) */}
-      <div className="absolute right-6 bottom-6 z-30">
+      {/* Side Controls (Right) */}
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-30">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleCapture}
+          disabled={isAnalyzing}
+          className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all ${
+            isAnalyzing 
+              ? "bg-zinc-800 text-white/50" 
+              : "bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/20"
+          }`}
+          id="analyze-btn"
+        >
+          {isAnalyzing ? (
+            <RefreshCcw className="w-8 h-8 animate-spin" />
+          ) : (
+            <Scan className="w-8 h-8 stroke-[2.5]" />
+          )}
+        </motion.button>
+        
         <button 
           onClick={() => window.location.reload()}
-          className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md active:scale-95 transition-all border border-white/10"
+          className="w-16 h-16 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md active:scale-95 transition-all border border-white/10"
           id="reset-btn"
         >
-          <RefreshCcw className="w-5 h-5" />
+          <RefreshCcw className="w-6 h-6" />
         </button>
       </div>
 
