@@ -16,6 +16,7 @@ export default function App() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showIncompatible, setShowIncompatible] = useState(false);
   const [showDeviceList, setShowDeviceList] = useState(false);
 
   const availableDevices = [
@@ -27,9 +28,11 @@ export default function App() {
   const handleDetection = (result: GeminiResponse) => {
     if (DEVICES[result.detectedDevice]) {
       setSelectedDevice(DEVICES[result.detectedDevice]);
+      setShowIncompatible(false);
       setError(null);
     } else {
       setSelectedDevice(null);
+      setShowIncompatible(true);
       setError("No pude identificar el dispositivo. Probá acercarte o mejorar la iluminación.");
     }
   };
@@ -46,33 +49,7 @@ export default function App() {
 
       <main className="flex-1 w-full flex items-center justify-center relative bg-gradient-to-br from-[#1a1c23] via-[#0f1115] to-[#1a1c23] overflow-hidden">
         <AnimatePresence mode="wait">
-          {error ? (
-            <motion.div 
-              key="error"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="text-center space-y-6 p-6"
-              id="error-view"
-            >
-              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20">
-                <AlertCircle className="w-10 h-10 text-red-400" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-xl font-bold text-white uppercase tracking-tight">Ups! Algo salió mal</h2>
-                <p className="text-white/60 max-w-xs mx-auto text-sm">
-                  {error}
-                </p>
-              </div>
-              <button 
-                onClick={() => setError(null)}
-                className="px-8 py-3 bg-white text-zinc-950 font-bold rounded-xl hover:bg-emerald-400 transition-colors w-full sm:w-auto"
-                id="retry-btn"
-              >
-                Volver a intentar
-              </button>
-            </motion.div>
-          ) : !selectedDevice ? (
+          {!selectedDevice && !showIncompatible ? (
             <motion.div 
               key="scanner"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -85,7 +62,6 @@ export default function App() {
                 onDetect={handleDetection}
                 isAnalyzing={isAnalyzing}
                 setIsAnalyzing={setIsAnalyzing}
-                onError={(msg) => setError(msg)}
               />
               
               <div className="flex flex-col gap-3 w-full max-w-sm">
@@ -124,6 +100,31 @@ export default function App() {
                   </AnimatePresence>
                 </div>
               </div>
+            </motion.div>
+          ) : showIncompatible ? (
+            <motion.div 
+              key="error"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center space-y-6"
+              id="error-view"
+            >
+              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20">
+                <AlertCircle className="w-10 h-10 text-red-400" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold text-white">No pudimos identificarlo</h2>
+                <p className="text-white/60 max-w-xs mx-auto">
+                  Probá acercarte más al dispositivo o mejorar la iluminación del ambiente.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowIncompatible(false)}
+                className="px-8 py-3 bg-white text-zinc-950 font-bold rounded-xl hover:bg-emerald-400 transition-colors"
+                id="retry-btn"
+              >
+                Volver a intentar
+              </button>
             </motion.div>
           ) : null}
         </AnimatePresence>

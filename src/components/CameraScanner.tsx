@@ -7,18 +7,17 @@ interface CameraScannerProps {
   onDetect: (result: GeminiResponse) => void;
   isAnalyzing: boolean;
   setIsAnalyzing: (val: boolean) => void;
-  onError: (msg: string) => void;
 }
 
-export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, onError }: CameraScannerProps) {
+export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }: CameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [internalError, setInternalError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [permissionsGranted, setPermissionsGranted] = useState(false);
 
   const startCamera = async () => {
-    setInternalError(null);
+    setError(null);
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Tu navegador no soporta el acceso a la cámara.");
@@ -41,14 +40,14 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, o
       
       setStream(mediaStream);
       setPermissionsGranted(true);
-      setInternalError(null);
+      setError(null);
     } catch (err) {
       console.error("Camera error:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       if (errorMessage.includes("Permission denied") || errorMessage.includes("NotAllowedError")) {
-        setInternalError("Permiso denegado. Por favor, permití el acceso a la cámara en los ajustes de tu navegador.");
+        setError("Permiso denegado. Por favor, permití el acceso a la cámara en los ajustes de tu navegador.");
       } else {
-        setInternalError("No se pudo acceder a la cámara. Verificá que no esté siendo usada por otra app.");
+        setError("No se pudo acceder a la cámara. Verificá que no esté siendo usada por otra app.");
       }
     }
   };
@@ -97,7 +96,7 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, o
       if (result) {
         onDetect(result);
       } else {
-        onError("Ocurrió un error al analizar la imagen. Intentá de nuevo o revisá tu conexión.");
+        setError("Error al analizar. Probá de nuevo.");
       }
     }
     setIsAnalyzing(false);
@@ -130,7 +129,7 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, o
         >
           <Camera className="w-5 h-5" /> Activar Cámara
         </button>
-        {internalError && <p className="text-red-400 text-xs italic">{internalError}</p>}
+        {error && <p className="text-red-400 text-xs italic">{error}</p>}
       </div>
     );
   }
