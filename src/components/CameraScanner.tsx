@@ -17,20 +17,41 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
   const [permissionsGranted, setPermissionsGranted] = useState(false);
 
   const startCamera = async () => {
+    setError(null);
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false,
-      });
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Tu navegador no soporta el acceso a la cámara.");
+      }
+
+      // Intentar primero con cámara trasera (facingMode: environment)
+      let mediaStream: MediaStream;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+      } catch (e) {
+        console.warn("No se encontró cámara trasera, intentando cámara por defecto...");
+        // Fallback a cualquier cámara disponible
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
+      
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
       setPermissionsGranted(true);
-      setError(null);
     } catch (err) {
       console.error("Camera error:", err);
-      setError("No se pudo acceder a la cámara. Asegúrate de dar los permisos necesarios.");
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes("Permission denied") || errorMessage.includes("NotAllowedError")) {
+        setError("Permiso denegado. Por favor, permití el acceso a la cámara en los ajustes de tu navegador.");
+      } else {
+        setError(errorMessage || "No se pudo acceder a la cámara.");
+      }
     }
   };
 
