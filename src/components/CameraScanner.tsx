@@ -128,23 +128,23 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
       />
       
       {/* Scanning Overlay */}
-      <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-        <div className="w-[300px] h-[200px] md:w-[400px] md:h-[300px] border border-white/10 relative">
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div className="w-[85%] h-[70%] md:w-[75%] md:h-[65%] border border-white/10 relative">
           {/* Corners */}
-          <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-emerald-500 rounded-tl-lg shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-          <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-emerald-500 rounded-tr-lg shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-          <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-emerald-500 rounded-bl-lg shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-          <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-emerald-500 rounded-br-lg shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+          <div className="absolute -top-1 -left-1 w-12 h-12 border-t-4 border-l-4 border-emerald-500 rounded-tl-lg shadow-[0_0_20px_rgba(16,185,129,0.7)]" />
+          <div className="absolute -top-1 -right-1 w-12 h-12 border-t-4 border-r-4 border-emerald-500 rounded-tr-lg shadow-[0_0_20px_rgba(16,185,129,0.7)]" />
+          <div className="absolute -bottom-1 -left-1 w-12 h-12 border-b-4 border-l-4 border-emerald-500 rounded-bl-lg shadow-[0_0_20px_rgba(16,185,129,0.7)]" />
+          <div className="absolute -bottom-1 -right-1 w-12 h-12 border-b-4 border-r-4 border-emerald-500 rounded-br-lg shadow-[0_0_20px_rgba(16,185,129,0.7)]" />
           
           <motion.div 
             animate={{ top: ["0%", "100%", "0%"] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            className="absolute left-0 right-0 h-[2px] bg-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.4)]"
           />
           
           <div className="absolute inset-0 flex items-center justify-center uppercase">
-            <p className="text-[10px] tracking-[0.3em] text-emerald-500 font-bold bg-black/60 px-4 py-2 rounded-lg backdrop-blur-sm border border-emerald-500/20">
-              Apuntá a un dispositivo
+            <p className="text-[10px] tracking-[0.4em] text-emerald-400 font-bold bg-black/60 px-6 py-2 rounded-lg backdrop-blur-md border border-emerald-500/30 whitespace-nowrap">
+              Enfoque el dispositivo
             </p>
           </div>
         </div>
