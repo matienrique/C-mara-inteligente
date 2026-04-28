@@ -1,4 +1,4 @@
-import { Camera, RefreshCcw, Scan, Search } from "lucide-react";
+import { Camera, RefreshCcw, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { analyzeDeviceImage, GeminiResponse } from "../services/geminiService";
@@ -160,7 +160,7 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
           />
           
           <div className="absolute inset-0 flex items-center justify-center uppercase">
-            <p className="text-[10px] tracking-[0.4em] text-emerald-400 font-bold bg-black/60 px-6 py-2 rounded-lg backdrop-blur-md border border-emerald-500/30 whitespace-nowrap">
+            <p className="text-[10px] tracking-[0.4em] text-emerald-400/40 font-bold bg-black/40 px-6 py-2 rounded-lg backdrop-blur-sm border border-emerald-500/10 whitespace-nowrap">
               Enfoque el dispositivo
             </p>
           </div>
@@ -173,17 +173,17 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
           whileTap={{ scale: 0.95 }}
           onClick={handleCapture}
           disabled={isAnalyzing}
-          className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all ${
+          className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all border ${
             isAnalyzing 
-              ? "bg-zinc-800 text-white/50" 
-              : "bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/20"
+              ? "bg-zinc-800 text-white/50 border-white/5" 
+              : "bg-white border-emerald-500/30 hover:bg-zinc-50 group"
           }`}
           id="analyze-btn"
         >
           {isAnalyzing ? (
             <RefreshCcw className="w-8 h-8 animate-spin" />
           ) : (
-            <Scan className="w-8 h-8 stroke-[2.5]" />
+            <Check className="w-8 h-8 text-emerald-500 stroke-[3]" />
           )}
         </motion.button>
         
