@@ -3,20 +3,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Header from "./components/Header";
 import CameraScanner from "./components/CameraScanner";
 import RecommendationCard from "./components/RecommendationCard";
 import { DEVICES, Device } from "./data/devices";
 import { GeminiResponse } from "./services/geminiService";
-import { Trophy, AlertCircle, Sparkles } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function App() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showIncompatible, setShowIncompatible] = useState(false);
+  const [showDeviceList, setShowDeviceList] = useState(false);
+
+  const availableDevices = [
+    "aire acondicionado", "heladera", "freezer", "lavarropas", "termotanques", 
+    "televisor", "iluminación", "cocina", "pava eléctrica", "plancha", 
+    "ventilador", "cargador", "computadora"
+  ];
 
   const handleDetection = (result: GeminiResponse) => {
     if (DEVICES[result.detectedDevice]) {
@@ -57,9 +64,41 @@ export default function App() {
                 setIsAnalyzing={setIsAnalyzing}
               />
               
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-4 text-white/60 text-sm max-w-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 text-emerald-400" />
-                <p>Apuntá a heladeras, aires, lavarropas, TV, termotanques o cargadores.</p>
+              <div className="flex flex-col gap-3 w-full max-w-sm">
+                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 flex items-center gap-4 text-white/80 text-sm">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+                  <p className="leading-tight">Apuntá a los electrodomésticos que más uses y te hacemos recomendaciones</p>
+                </div>
+
+                <div className="w-full">
+                  <button 
+                    onClick={() => setShowDeviceList(!showDeviceList)}
+                    className="w-full flex items-center justify-between px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
+                  >
+                    <span className="text-white/60 text-xs font-medium">Consultá el listado de equipos disponibles acá</span>
+                    {showDeviceList ? <ChevronUp className="w-3.5 h-3.5 text-emerald-400" /> : <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />}
+                  </button>
+
+                  <AnimatePresence>
+                    {showDeviceList && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden bg-white/5 border-x border-b border-white/10 rounded-b-xl -mt-2 pt-4 pb-2 px-5"
+                      >
+                        <div className="flex flex-col gap-y-2 pb-2">
+                          {availableDevices.map((device, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/30" />
+                              <span className="text-[10px] uppercase tracking-[0.1em] text-white/50 font-medium">{device}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </motion.div>
           ) : showIncompatible ? (
@@ -96,19 +135,8 @@ export default function App() {
         onClose={() => setSelectedDevice(null)}
       />
       
-      <footer className="px-8 py-4 bg-[#15181e] flex justify-between items-center text-[10px] text-gray-500 border-t border-white/5 z-10">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            Cámara Activa
-          </span>
-          <span className="hidden sm:inline">Privacidad: La imagen no se almacena</span>
-        </div>
-        <div className="flex gap-4 font-mono uppercase tracking-wider">
-          <span>ISO 400</span>
-          <span>f/1.8</span>
-          <span>1/120s</span>
-        </div>
+      <footer className="px-8 py-4 bg-[#15181e] border-t border-white/5 z-10 min-h-[40px]">
+        {/* Footer content removed per user request */}
       </footer>
     </div>
   );

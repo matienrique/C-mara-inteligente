@@ -12,9 +12,6 @@ export default function Header() {
         <h1 className="text-xl font-bold tracking-tight text-emerald-400">
           Escaneá tu hogar eficiente
         </h1>
-        <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-          IA de detección v1.0
-        </p>
       </div>
     </motion.header>
   );
