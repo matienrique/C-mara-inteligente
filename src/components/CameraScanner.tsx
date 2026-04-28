@@ -66,14 +66,31 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Optimize for speed: resize to a max dimension of 768px while maintaining aspect ratio
+    const maxSize = 768;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+
+    if (width > height) {
+      if (width > maxSize) {
+        height *= maxSize / width;
+        width = maxSize;
+      }
+    } else {
+      if (height > maxSize) {
+        width *= maxSize / height;
+        height = maxSize;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
     
     const ctx = canvas.getContext("2d");
     if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+      ctx.drawImage(video, 0, 0, width, height);
+      // Use 0.7 quality for faster upload/processing
+      const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
       
       const result = await analyzeDeviceImage(base64);
       if (result) {

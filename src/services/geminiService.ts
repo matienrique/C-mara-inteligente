@@ -22,17 +22,8 @@ export async function analyzeDeviceImage(base64Image: string): Promise<GeminiRes
               },
             },
             {
-              text: `Identify the home appliance in this image. 
-              Return ONLY a JSON object with the following structure:
-              {
-                "detectedDevice": "id_of_device",
-                "confidence": "alta" | "media" | "baja",
-                "description": "Short description of what you see"
-              }
-              
-              The 'detectedDevice' MUST be one of these IDs if possible:
-              aire_acondicionado, heladera, freezer, lavarropas, termotanque, tv, iluminacion, cocina, pava_electrica, plancha, ventilador, cargador, computadora.
-              If it is something else, use 'desconocido'.`,
+              text: `Identify home appliance. IDs: aire_acondicionado, heladera, freezer, lavarropas, termotanque, tv, iluminacion, cocina, pava_electrica, plancha, ventilador, cargador, computadora.
+              Return JSON: {"detectedDevice": "id", "confidence": "alta"|"media"|"baja", "description": "text"}. Use 'desconocido' if not in list.`,
             },
           ],
         },
