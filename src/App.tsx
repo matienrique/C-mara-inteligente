@@ -16,25 +16,7 @@ export default function App() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [appliedTips, setAppliedTips] = useState<Set<string>>(new Set());
   const [showIncompatible, setShowIncompatible] = useState(false);
-
-  // Load applied tips from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("hogar-eficiente-tips");
-    if (saved) {
-      try {
-        setAppliedTips(new Set(JSON.parse(saved)));
-      } catch (e) {
-        console.error("Error loading tips", e);
-      }
-    }
-  }, []);
-
-  // Save applied tips
-  useEffect(() => {
-    localStorage.setItem("hogar-eficiente-tips", JSON.stringify(Array.from(appliedTips)));
-  }, [appliedTips]);
 
   const handleDetection = (result: GeminiResponse) => {
     if (DEVICES[result.detectedDevice]) {
@@ -42,40 +24,23 @@ export default function App() {
       setShowIncompatible(false);
       setError(null);
     } else {
-      setSelectedDevice(null);
-      setShowIncompatible(true);
-      setError("No pude identificar el dispositivo. Probá acercarte o mejorar la iluminación.");
+      // Only show error if we weren't already showing a device (to avoid interruption)
+      if (!selectedDevice) {
+        setSelectedDevice(null);
+        setShowIncompatible(true);
+        setError("No pude identificar el dispositivo. Probá acercarte o mejorar la iluminación.");
+      }
     }
   };
 
-  const toggleTip = () => {
-    // This is a simplified version, ideally we'd pass the specific tip ID
-    // But for the requested "Marcar consejo aplicado" button/action:
-    // We'll just demonstrate the feedback.
-  };
-
-  const addTip = (id: string, idx: number) => {
-    const key = `${id}-${idx}`;
-    setAppliedTips(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col font-sans selection:bg-emerald-500 selection:text-zinc-950 overflow-hidden" id="app-root">
+    <div className="min-h-screen bg-[#0f1115] flex flex-col font-sans selection:bg-emerald-500 selection:text-zinc-950 overflow-hidden" id="app-root">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[100px] rounded-full" />
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 blur-[120px] rounded-full" />
       </div>
 
-      <Header totalSavings={appliedTips.size} />
+      <Header />
 
       <main className="flex-1 w-full flex items-center justify-center relative bg-gradient-to-br from-[#1a1c23] via-[#0f1115] to-[#1a1c23] overflow-hidden">
         <AnimatePresence mode="wait">
@@ -92,11 +57,12 @@ export default function App() {
                 onDetect={handleDetection}
                 isAnalyzing={isAnalyzing}
                 setIsAnalyzing={setIsAnalyzing}
+                active={!selectedDevice}
               />
               
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-4 text-white/60 text-sm max-w-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 text-emerald-400" />
-                <p>Apuntá a heladeras, aires, lavarropas, TV, termotanques o cargadores.</p>
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-4 text-white/40 text-[10px] uppercase tracking-widest font-bold max-w-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                <p>Análisis automático activo</p>
               </div>
             </motion.div>
           ) : showIncompatible ? (
@@ -131,8 +97,6 @@ export default function App() {
       <RecommendationCard 
         device={selectedDevice}
         onClose={() => setSelectedDevice(null)}
-        appliedTips={appliedTips}
-        onApplyTip={(idx) => selectedDevice && addTip(selectedDevice.id, idx)} 
       />
       
       <footer className="px-8 py-4 bg-[#15181e] flex justify-between items-center text-[10px] text-gray-500 border-t border-white/5 z-10">

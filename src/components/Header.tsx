@@ -1,10 +1,10 @@
 import { motion } from "motion/react";
 
 interface HeaderProps {
-  totalSavings?: number;
+  // totalSavings removed
 }
 
-export default function Header({ totalSavings = 0 }: HeaderProps) {
+export default function Header({ }: HeaderProps) {
   return (
     <motion.header 
       initial={{ opacity: 0, y: -20 }}
@@ -21,16 +21,9 @@ export default function Header({ totalSavings = 0 }: HeaderProps) {
         </p>
       </div>
       
-      <div className="flex items-center gap-6">
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold italic">Logros</span>
-          <span className="text-2xl font-mono text-emerald-400 tracking-tighter">
-            {totalSavings < 10 ? `0${totalSavings}` : totalSavings}
-          </span>
-        </div>
-        <div className="h-10 w-10 rounded-full border-2 border-emerald-500/30 flex items-center justify-center bg-emerald-500/10">
-          <span className="text-sm font-bold text-emerald-400">{totalSavings}</span>
-        </div>
+      <div className="flex items-center gap-2">
+        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="text-[10px] uppercase tracking-widest text-emerald-500/70 font-bold">Sistema Activo</span>
       </div>
     </motion.header>
   );
