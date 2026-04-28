@@ -42,9 +42,19 @@ export async function analyzeDeviceImage(base64Image: string): Promise<GeminiRes
       },
     });
 
-    if (!response.text) return null;
+    if (!response.text) {
+      console.warn("Gemini output was empty.");
+      return null;
+    }
     
-    return JSON.parse(response.text.trim()) as GeminiResponse;
+    try {
+      const parsed = JSON.parse(response.text.trim()) as GeminiResponse;
+      console.log("Gemini parsed result:", parsed);
+      return parsed;
+    } catch (e) {
+      console.error("Failed to parse Gemini JSON:", response.text, e);
+      return null;
+    }
   } catch (error) {
     console.error("Gemini Error:", error);
     return null;

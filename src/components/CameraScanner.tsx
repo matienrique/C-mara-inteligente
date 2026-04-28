@@ -7,17 +7,18 @@ interface CameraScannerProps {
   onDetect: (result: GeminiResponse) => void;
   isAnalyzing: boolean;
   setIsAnalyzing: (val: boolean) => void;
+  onError: (msg: string) => void;
 }
 
-export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }: CameraScannerProps) {
+export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing, onError }: CameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [internalError, setInternalError] = useState<string | null>(null);
   const [permissionsGranted, setPermissionsGranted] = useState(false);
 
   const startCamera = async () => {
-    setError(null);
+    setInternalError(null);
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Tu navegador no soporta el acceso a la cámara.");
@@ -40,14 +41,14 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
       
       setStream(mediaStream);
       setPermissionsGranted(true);
-      setError(null);
+      setInternalError(null);
     } catch (err) {
       console.error("Camera error:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       if (errorMessage.includes("Permission denied") || errorMessage.includes("NotAllowedError")) {
-        setError("Permiso denegado. Por favor, permití el acceso a la cámara en los ajustes de tu navegador.");
+        setInternalError("Permiso denegado. Por favor, permití el acceso a la cámara en los ajustes de tu navegador.");
       } else {
-        setError("No se pudo acceder a la cámara. Verificá que no esté siendo usada por otra app.");
+        setInternalError("No se pudo acceder a la cámara. Verificá que no esté siendo usada por otra app.");
       }
     }
   };
@@ -63,58 +64,43 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
     if (!videoRef.current || !canvasRef.current || isAnalyzing) return;
 
     setIsAnalyzing(true);
-    setError(null);
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
     
-    try {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      
-      // Optimize for speed: resize to a max dimension of 768px while maintaining aspect ratio
-      const maxSize = 768;
-      let width = video.videoWidth;
-      let height = video.videoHeight;
+    // Optimize for speed: resize to a max dimension of 768px while maintaining aspect ratio
+    const maxSize = 768;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
 
-      if (width > height) {
-        if (width > maxSize) {
-          height *= maxSize / width;
-          width = maxSize;
-        }
-      } else {
-        if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
-        }
+    if (width > height) {
+      if (width > maxSize) {
+        height *= maxSize / width;
+        width = maxSize;
       }
-
-      canvas.width = width;
-      canvas.height = height;
-      
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, width, height);
-        // Use 0.7 quality for faster upload/processing
-        const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
-        
-        // Add a safety timeout of 15 seconds to the analysis
-        const analysisPromise = analyzeDeviceImage(base64);
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("La detección tardó demasiado")), 15000)
-        );
-
-        const result = await Promise.race([analysisPromise, timeoutPromise]) as GeminiResponse;
-        
-        if (result) {
-          onDetect(result);
-        } else {
-          setError("No se pudo identificar el equipo. Intentá acercarte más.");
-        }
+    } else {
+      if (height > maxSize) {
+        width *= maxSize / height;
+        height = maxSize;
       }
-    } catch (err) {
-      console.error("Capture error:", err);
-      setError("Error de conexión. Verificá tu señal e intentá de nuevo.");
-    } finally {
-      setIsAnalyzing(false);
     }
+
+    canvas.width = width;
+    canvas.height = height;
+    
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, width, height);
+      // Use 0.7 quality for faster upload/processing
+      const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+      
+      const result = await analyzeDeviceImage(base64);
+      if (result) {
+        onDetect(result);
+      } else {
+        onError("Ocurrió un error al analizar la imagen. Intentá de nuevo o revisá tu conexión.");
+      }
+    }
+    setIsAnalyzing(false);
   };
 
   useEffect(() => {
@@ -144,7 +130,7 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
         >
           <Camera className="w-5 h-5" /> Activar Cámara
         </button>
-        {error && <p className="text-red-400 text-xs italic">{error}</p>}
+        {internalError && <p className="text-red-400 text-xs italic">{internalError}</p>}
       </div>
     );
   }
