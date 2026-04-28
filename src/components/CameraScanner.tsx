@@ -63,43 +63,58 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
     if (!videoRef.current || !canvasRef.current || isAnalyzing) return;
 
     setIsAnalyzing(true);
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
+    setError(null);
     
-    // Optimize for speed: resize to a max dimension of 768px while maintaining aspect ratio
-    const maxSize = 768;
-    let width = video.videoWidth;
-    let height = video.videoHeight;
-
-    if (width > height) {
-      if (width > maxSize) {
-        height *= maxSize / width;
-        width = maxSize;
-      }
-    } else {
-      if (height > maxSize) {
-        width *= maxSize / height;
-        height = maxSize;
-      }
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-    
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, width, height);
-      // Use 0.7 quality for faster upload/processing
-      const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+    try {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
       
-      const result = await analyzeDeviceImage(base64);
-      if (result) {
-        onDetect(result);
+      // Optimize for speed: resize to a max dimension of 768px while maintaining aspect ratio
+      const maxSize = 768;
+      let width = video.videoWidth;
+      let height = video.videoHeight;
+
+      if (width > height) {
+        if (width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        }
       } else {
-        setError("Error al analizar. Probá de nuevo.");
+        if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
       }
+
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, width, height);
+        // Use 0.7 quality for faster upload/processing
+        const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+        
+        // Add a safety timeout of 15 seconds to the analysis
+        const analysisPromise = analyzeDeviceImage(base64);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("La detección tardó demasiado")), 15000)
+        );
+
+        const result = await Promise.race([analysisPromise, timeoutPromise]) as GeminiResponse;
+        
+        if (result) {
+          onDetect(result);
+        } else {
+          setError("No se pudo identificar el equipo. Intentá acercarte más.");
+        }
+      }
+    } catch (err) {
+      console.error("Capture error:", err);
+      setError("Error de conexión. Verificá tu señal e intentá de nuevo.");
+    } finally {
+      setIsAnalyzing(false);
     }
-    setIsAnalyzing(false);
   };
 
   useEffect(() => {
