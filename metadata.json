@@ -1,0 +1,6 @@
+{
+  "name": "Hogar Eficiente",
+  "description": "Herramienta de cámara inteligente para eficiencia energética. Identifica electrodomésticos y ofrece consejos de ahorro.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}
