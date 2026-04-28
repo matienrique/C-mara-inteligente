@@ -23,7 +23,7 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
         throw new Error("Tu navegador no soporta el acceso a la cámara.");
       }
 
-      // Intentar primero con cámara trasera (facingMode: environment)
+      // Intentar primero con cámara trasera
       let mediaStream: MediaStream;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -31,8 +31,7 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
           audio: false,
         });
       } catch (e) {
-        console.warn("No se encontró cámara trasera, intentando cámara por defecto...");
-        // Fallback a cualquier cámara disponible
+        console.warn("No environment camera, trying default...");
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false,
@@ -40,17 +39,15 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
       }
       
       setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
       setPermissionsGranted(true);
+      setError(null);
     } catch (err) {
       console.error("Camera error:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       if (errorMessage.includes("Permission denied") || errorMessage.includes("NotAllowedError")) {
         setError("Permiso denegado. Por favor, permití el acceso a la cámara en los ajustes de tu navegador.");
       } else {
-        setError(errorMessage || "No se pudo acceder a la cámara.");
+        setError("No se pudo acceder a la cámara. Verificá que no esté siendo usada por otra app.");
       }
     }
   };
@@ -82,15 +79,19 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
       if (result) {
         onDetect(result);
       } else {
-        setError("Error al analizar la imagen. Intentá de nuevo.");
+        setError("Error al analizar. Probá de nuevo.");
       }
     }
     setIsAnalyzing(false);
   };
 
   useEffect(() => {
+    if (stream && videoRef.current && permissionsGranted) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => console.error("Video play error:", e));
+    }
     return () => stopCamera();
-  }, [stream]);
+  }, [stream, permissionsGranted]);
 
   if (!permissionsGranted) {
     return (
@@ -122,7 +123,8 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
         ref={videoRef}
         autoPlay
         playsInline
-        className="w-full h-full object-cover opacity-60"
+        muted
+        className="w-full h-full object-cover opacity-80"
       />
       
       {/* Scanning Overlay */}
