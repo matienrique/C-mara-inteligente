@@ -9,9 +9,6 @@ export default function Header() {
       id="app-header"
     >
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-emerald-400">
-          Escaneá tu hogar eficiente
-        </h1>
       </div>
     </motion.header>
   );
