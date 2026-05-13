@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Header from "./components/Header";
 import CameraScanner from "./components/CameraScanner";
 import RecommendationCard from "./components/RecommendationCard";
+import AdminPanel from "./components/AdminPanel";
 import { DEVICES, Device } from "./data/devices";
 import { GeminiResponse } from "./services/geminiService";
-import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 
 export default function App() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
@@ -18,6 +19,26 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [showIncompatible, setShowIncompatible] = useState(false);
   const [showDeviceList, setShowDeviceList] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [customRecommendations, setCustomRecommendations] = useState<Record<string, string[]>>({});
+
+  // Load custom recommendations from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("custom_recommendations");
+    if (saved) {
+      try {
+        setCustomRecommendations(JSON.parse(saved));
+      } catch (e) {
+        console.error("Error loading custom recommendations", e);
+      }
+    }
+  }, []);
+
+  const updateRecommendations = (deviceId: string, recommendations: string[]) => {
+    const updated = { ...customRecommendations, [deviceId]: recommendations };
+    setCustomRecommendations(updated);
+    localStorage.setItem("custom_recommendations", JSON.stringify(updated));
+  };
 
   const availableDevices = [
     "aire acondicionado", "heladera", "freezer", "lavarropas", "termotanques", 
@@ -131,12 +152,32 @@ export default function App() {
       </main>
 
       <RecommendationCard 
-        device={selectedDevice}
+        device={selectedDevice ? {
+          ...selectedDevice,
+          recomendaciones: [
+            ...selectedDevice.recomendaciones,
+            ...(customRecommendations[selectedDevice.id] || [])
+          ]
+        } : null}
         onClose={() => setSelectedDevice(null)}
       />
+
+      <AdminPanel 
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
+        customRecommendations={customRecommendations}
+        onUpdateRecommendations={updateRecommendations}
+      />
       
-      <footer className="px-8 py-4 bg-[#15181e] border-t border-white/5 z-10 min-h-[40px]">
-        {/* Footer content removed per user request */}
+      <footer className="px-8 py-4 bg-[#15181e] border-t border-white/5 z-10 min-h-[40px] flex items-center justify-between">
+        <div className="flex-1" />
+        <button 
+          onClick={() => setIsAdminOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] text-gray-500 hover:text-white transition-all border border-white/5"
+        >
+          <ShieldCheck className="w-3 h-3" />
+          Modificaciones
+        </button>
       </footer>
     </div>
   );
