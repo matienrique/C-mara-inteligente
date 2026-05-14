@@ -266,40 +266,63 @@ export default function AdminPanel({
                     <Users className="w-4 h-4" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">Visitantes Totales</span>
                   </div>
-                  <p className="text-4xl font-mono font-bold text-white tracking-tighter">{stats.visits}</p>
+                  <motion.p 
+                    key={stats.visits}
+                    initial={{ scale: 1.2, color: "#10b981" }}
+                    animate={{ scale: 1, color: "#ffffff" }}
+                    className="text-4xl font-mono font-bold text-white tracking-tighter"
+                  >
+                    {stats.visits}
+                  </motion.p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-2">
                   <div className="flex items-center gap-2 text-white/40">
                     <Smartphone className="w-4 h-4" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">Escaneos Totales</span>
                   </div>
-                  <p className="text-4xl font-mono font-bold text-emerald-400 tracking-tighter">
+                  <motion.p 
+                    key={Object.values(stats.scans).reduce((a, b) => a + b, 0)}
+                    initial={{ scale: 1.2, color: "#ffffff" }}
+                    animate={{ scale: 1, color: "#34d399" }}
+                    className="text-4xl font-mono font-bold text-emerald-400 tracking-tighter"
+                  >
                     {Object.values(stats.scans).reduce((a, b) => a + b, 0)}
-                  </p>
+                  </motion.p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-1">Escaneos por Dispositivo</h4>
                 <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-                  {Object.values(DEVICES).map((device, idx) => (
-                    <div 
-                      key={device.id} 
-                      className={`flex items-center justify-between p-4 ${idx !== 0 ? "border-t border-white/5" : ""}`}
-                    >
-                      <span className="text-sm text-white/80 font-medium">{device.nombre}</span>
-                      <div className="flex items-center gap-4">
-                        <div className="h-1.5 w-24 bg-white/5 rounded-full overflow-hidden">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.min(100, (stats.scans[device.id] || 0) * 10)}%` }}
-                            className="h-full bg-emerald-500/40"
-                          />
+                  {Object.values(DEVICES).map((device, idx) => {
+                    const count = stats.scans[device.id] || 0;
+                    return (
+                      <div 
+                        key={device.id} 
+                        className={`flex items-center justify-between p-4 ${idx !== 0 ? "border-t border-white/5" : ""}`}
+                      >
+                        <span className="text-sm text-white/80 font-medium">{device.nombre}</span>
+                        <div className="flex items-center gap-4">
+                          <div className="h-1.5 w-24 bg-white/5 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${Math.min(100, count * 10)}%` }}
+                              transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                              className="h-full bg-emerald-500/40"
+                            />
+                          </div>
+                          <motion.span 
+                            key={count}
+                            initial={{ scale: 1.5, color: "#34d399" }}
+                            animate={{ scale: 1, color: "#ffffff" }}
+                            className="text-sm font-mono font-bold text-white"
+                          >
+                            {count}
+                          </motion.span>
                         </div>
-                        <span className="text-sm font-mono font-bold text-white">{stats.scans[device.id] || 0}</span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

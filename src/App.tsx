@@ -101,11 +101,13 @@ export default function App() {
       setShowIncompatible(false);
       setError(null);
 
-      // Update scan stats
-      const updatedScans = { ...stats.scans, [device.id]: (stats.scans[device.id] || 0) + 1 };
-      const updatedStats = { ...stats, scans: updatedScans };
-      setStats(updatedStats);
-      localStorage.setItem("app_analytics", JSON.stringify(updatedStats));
+      // Update scan stats using functional update
+      setStats(prev => {
+        const updatedScans = { ...prev.scans, [device.id]: (prev.scans[device.id] || 0) + 1 };
+        const updated = { ...prev, scans: updatedScans };
+        localStorage.setItem("app_analytics", JSON.stringify(updated));
+        return updated;
+      });
     } else {
       setSelectedDevice(null);
       setShowIncompatible(true);
