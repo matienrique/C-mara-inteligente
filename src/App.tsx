@@ -11,6 +11,7 @@ import RecommendationCard from "./components/RecommendationCard";
 import AdminPanel from "./components/AdminPanel";
 import { DEVICES, Device } from "./data/devices";
 import { GeminiResponse } from "./services/geminiService";
+import { subscribeToStats, incrementVisit, incrementScan } from "./services/firebase";
 import { AlertCircle, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 
 export default function App() {
@@ -27,31 +28,15 @@ export default function App() {
     scans: {} as Record<string, number>
   });
 
-  // Load custom recommendations, hidden defaults and stats from localStorage
+  // Load custom recommendations, hidden defaults and stats from localStorage/Firebase
   useEffect(() => {
-    // VISITS & SCANS: Load and increment visit count on load
-    const savedStats = localStorage.getItem("app_analytics");
-    let currentStats: { visits: number; scans: Record<string, number> } = { visits: 0, scans: {} };
-    
-    if (savedStats) {
-      try {
-        const parsed = JSON.parse(savedStats);
-        currentStats = {
-          visits: typeof parsed.visits === 'number' ? parsed.visits : 0,
-          scans: parsed.scans && typeof parsed.scans === 'object' ? parsed.scans : {}
-        };
-      } catch (e) {
-        console.error("Error loading stats", e);
-      }
-    }
-    
-    const updatedStats = {
-      ...currentStats,
-      visits: currentStats.visits + 1
-    };
-    
-    setStats(updatedStats);
-    localStorage.setItem("app_analytics", JSON.stringify(updatedStats));
+    // SYNCED STATS: Use Firebase for global analytics
+    const unsubscribe = subscribeToStats((newStats) => {
+      setStats(newStats);
+    });
+
+    // Increment visit once per session/tab load
+    incrementVisit();
 
     // RECOMMENDATIONS
     const savedRecs = localStorage.getItem("custom_recommendations");
@@ -72,6 +57,7 @@ export default function App() {
         console.error("Error loading hidden defaults", e);
       }
     }
+    return () => unsubscribe();
   }, []);
 
   const updateRecommendations = (deviceId: string, recommendations: string[]) => {
@@ -100,17 +86,8 @@ export default function App() {
       setShowIncompatible(false);
       setError(null);
 
-      // Update scan stats using functional update for reliability
-      setStats(prev => {
-        const currentScans = prev.scans || {};
-        const updatedScans = { 
-          ...currentScans, 
-          [device.id]: (currentScans[device.id] || 0) + 1 
-        };
-        const updated = { ...prev, scans: updatedScans };
-        localStorage.setItem("app_analytics", JSON.stringify(updated));
-        return updated;
-      });
+      // Update scan stats in Firebase
+      incrementScan(device.id);
     } else {
       setSelectedDevice(null);
       setShowIncompatible(true);

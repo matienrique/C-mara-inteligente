@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "Analytics": {
+      "title": "Application Analytics",
+      "description": "Global counters for visits and device scans",
+      "type": "object",
+      "properties": {
+        "visits": {
+          "type": "number",
+          "description": "Total number of page visits"
+        },
+        "scans": {
+          "type": "object",
+          "description": "Map of device IDs to scan counts"
+        }
+      },
+      "required": ["visits", "scans"]
+    }
+  },
+  "firestore": {
+    "/analytics/{id}": {
+      "schema": "Analytics",
+      "description": "Targeting 'global' document for app-wide stats"
+    }
+  }
+}

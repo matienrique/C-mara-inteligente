@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Analytics security logic
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    match /analytics/{docId} {
+      allow read: if isValidId(docId);
+      
+      allow create: if isValidId(docId) && 
+        request.resource.data.keys().hasAll(['visits', 'scans']) &&
+        request.resource.data.visits is number &&
+        request.resource.data.scans is map;
+
+      allow update: if isValidId(docId) &&
+        request.resource.data.visits is number &&
+        request.resource.data.scans is map &&
+        // Ensure they only increment visits or specific scan counts
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['visits', 'scans']);
+    }
+  }
+}
