@@ -21,12 +21,13 @@ export default function App() {
   const [showDeviceList, setShowDeviceList] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [customRecommendations, setCustomRecommendations] = useState<Record<string, string[]>>({});
+  const [hiddenDefaults, setHiddenDefaults] = useState<Record<string, number[]>>({});
   const [stats, setStats] = useState({
     visits: 0,
     scans: {} as Record<string, number>
   });
 
-  // Load custom recommendations and stats from localStorage
+  // Load custom recommendations, hidden defaults and stats from localStorage
   useEffect(() => {
     // VISITS: Increment visit count on load
     const savedStats = localStorage.getItem("app_analytics");
@@ -57,12 +58,28 @@ export default function App() {
         console.error("Error loading recommendations", e);
       }
     }
+
+    // HIDDEN DEFAULTS
+    const savedHidden = localStorage.getItem("hidden_defaults");
+    if (savedHidden) {
+      try {
+        setHiddenDefaults(JSON.parse(savedHidden));
+      } catch (e) {
+        console.error("Error loading hidden defaults", e);
+      }
+    }
   }, []);
 
   const updateRecommendations = (deviceId: string, recommendations: string[]) => {
     const updated = { ...customRecommendations, [deviceId]: recommendations };
     setCustomRecommendations(updated);
     localStorage.setItem("custom_recommendations", JSON.stringify(updated));
+  };
+
+  const updateHiddenDefaults = (deviceId: string, hiddenIndices: number[]) => {
+    const updated = { ...hiddenDefaults, [deviceId]: hiddenIndices };
+    setHiddenDefaults(updated);
+    localStorage.setItem("hidden_defaults", JSON.stringify(updated));
   };
 
   const clearStats = () => {
@@ -193,7 +210,7 @@ export default function App() {
         device={selectedDevice ? {
           ...selectedDevice,
           recomendaciones: [
-            ...selectedDevice.recomendaciones,
+            ...selectedDevice.recomendaciones.filter((_, idx) => !(hiddenDefaults[selectedDevice.id] || []).includes(idx)),
             ...(customRecommendations[selectedDevice.id] || [])
           ]
         } : null}
@@ -205,6 +222,8 @@ export default function App() {
         onClose={() => setIsAdminOpen(false)}
         customRecommendations={customRecommendations}
         onUpdateRecommendations={updateRecommendations}
+        hiddenDefaults={hiddenDefaults}
+        onUpdateHiddenDefaults={updateHiddenDefaults}
         stats={stats}
       />
       

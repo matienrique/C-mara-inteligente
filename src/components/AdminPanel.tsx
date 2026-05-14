@@ -8,6 +8,8 @@ interface AdminPanelProps {
   onClose: () => void;
   customRecommendations: Record<string, string[]>;
   onUpdateRecommendations: (deviceId: string, recommendations: string[]) => void;
+  hiddenDefaults: Record<string, number[]>;
+  onUpdateHiddenDefaults: (deviceId: string, indices: number[]) => void;
   stats: {
     visits: number;
     scans: Record<string, number>;
@@ -19,6 +21,8 @@ export default function AdminPanel({
   onClose, 
   customRecommendations, 
   onUpdateRecommendations,
+  hiddenDefaults,
+  onUpdateHiddenDefaults,
   stats
 }: AdminPanelProps) {
   const [password, setPassword] = useState("");
@@ -60,6 +64,14 @@ export default function AdminPanel({
     const current = customRecommendations[deviceId] || [];
     const updated = current.filter((_, i) => i !== index);
     onUpdateRecommendations(deviceId, updated);
+  };
+
+  const toggleDefaultRecommendation = (deviceId: string, index: number) => {
+    const current = hiddenDefaults[deviceId] || [];
+    const updated = current.includes(index)
+      ? current.filter(i => i !== index)
+      : [...current, index];
+    onUpdateHiddenDefaults(deviceId, updated);
   };
 
   if (!isOpen) return null;
@@ -176,12 +188,35 @@ export default function AdminPanel({
                           <div className="space-y-2 border-t border-white/5 pt-4">
                             <p className="text-[10px] font-bold text-emerald-400/60 uppercase tracking-widest">Sugerencias actuales</p>
                             
-                            {device.recomendaciones.map((rec, i) => (
-                              <div key={`orig-${i}`} className="flex items-start gap-3 p-3 bg-white/2 rounded-xl text-sm text-white/60">
-                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500/40 flex-shrink-0" />
-                                <span>{rec}</span>
-                              </div>
-                            ))}
+                            {device.recomendaciones.map((rec, i) => {
+                              const isHidden = (hiddenDefaults[device.id] || []).includes(i);
+                              return (
+                                <div 
+                                  key={`orig-${i}`} 
+                                  className={`flex items-start gap-3 p-3 rounded-xl text-sm transition-all border ${
+                                    isHidden 
+                                      ? "bg-zinc-800/30 text-white/20 border-transparent grayscale" 
+                                      : "bg-white/2 text-white/60 border-white/5 group"
+                                  }`}
+                                >
+                                  <div className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                    isHidden ? "bg-white/10" : "bg-emerald-500/40"
+                                  }`} />
+                                  <span className="flex-1">{rec}</span>
+                                  <button 
+                                    onClick={() => toggleDefaultRecommendation(device.id, i)}
+                                    className={`p-1 rounded-md transition-all ${
+                                      isHidden 
+                                        ? "text-emerald-500 hover:bg-emerald-500/10" 
+                                        : "text-white/20 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100"
+                                    }`}
+                                    title={isHidden ? "Restaurar" : "Eliminar"}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              );
+                            })}
 
                             {(customRecommendations[device.id] || []).map((rec, i) => (
                               <div key={`custom-${i}`} className="flex items-start gap-3 p-3 bg-emerald-500/5 rounded-xl text-sm text-emerald-200/80 border border-emerald-500/10 group">
@@ -189,7 +224,7 @@ export default function AdminPanel({
                                 <span className="flex-1">{rec}</span>
                                 <button 
                                   onClick={() => removeRecommendation(device.id, i)}
-                                  className="text-white/20 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                  className="p-1 hover:bg-red-400/10 text-white/20 hover:text-red-400 rounded-md transition-all opacity-0 group-hover:opacity-100"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
