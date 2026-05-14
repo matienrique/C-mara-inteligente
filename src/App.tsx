@@ -21,15 +21,40 @@ export default function App() {
   const [showDeviceList, setShowDeviceList] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [customRecommendations, setCustomRecommendations] = useState<Record<string, string[]>>({});
+  const [stats, setStats] = useState({
+    visits: 0,
+    scans: {} as Record<string, number>
+  });
 
-  // Load custom recommendations from localStorage
+  // Load custom recommendations and stats from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("custom_recommendations");
-    if (saved) {
+    // VISITS: Increment visit count on load
+    const savedStats = localStorage.getItem("app_analytics");
+    let currentStats = { visits: 0, scans: {} as Record<string, number> };
+    
+    if (savedStats) {
       try {
-        setCustomRecommendations(JSON.parse(saved));
+        currentStats = JSON.parse(savedStats);
       } catch (e) {
-        console.error("Error loading custom recommendations", e);
+        console.error("Error loading stats", e);
+      }
+    }
+    
+    const updatedStats = {
+      ...currentStats,
+      visits: (currentStats.visits || 0) + 1
+    };
+    
+    setStats(updatedStats);
+    localStorage.setItem("app_analytics", JSON.stringify(updatedStats));
+
+    // RECOMMENDATIONS
+    const savedRecs = localStorage.getItem("custom_recommendations");
+    if (savedRecs) {
+      try {
+        setCustomRecommendations(JSON.parse(savedRecs));
+      } catch (e) {
+        console.error("Error loading recommendations", e);
       }
     }
   }, []);
@@ -40,6 +65,12 @@ export default function App() {
     localStorage.setItem("custom_recommendations", JSON.stringify(updated));
   };
 
+  const clearStats = () => {
+    const resetStats = { visits: 1, scans: {} as Record<string, number> };
+    setStats(resetStats);
+    localStorage.setItem("app_analytics", JSON.stringify(resetStats));
+  };
+
   const availableDevices = [
     "aire acondicionado", "heladera", "freezer", "lavarropas", "termotanques", 
     "televisor", "iluminación", "cocina", "pava eléctrica", "plancha", 
@@ -48,9 +79,16 @@ export default function App() {
 
   const handleDetection = (result: GeminiResponse) => {
     if (DEVICES[result.detectedDevice]) {
-      setSelectedDevice(DEVICES[result.detectedDevice]);
+      const device = DEVICES[result.detectedDevice];
+      setSelectedDevice(device);
       setShowIncompatible(false);
       setError(null);
+
+      // Update scan stats
+      const updatedScans = { ...stats.scans, [device.id]: (stats.scans[device.id] || 0) + 1 };
+      const updatedStats = { ...stats, scans: updatedScans };
+      setStats(updatedStats);
+      localStorage.setItem("app_analytics", JSON.stringify(updatedStats));
     } else {
       setSelectedDevice(null);
       setShowIncompatible(true);
@@ -167,6 +205,7 @@ export default function App() {
         onClose={() => setIsAdminOpen(false)}
         customRecommendations={customRecommendations}
         onUpdateRecommendations={updateRecommendations}
+        stats={stats}
       />
       
       <footer className="px-8 py-4 bg-[#15181e] border-t border-white/5 z-10 min-h-[40px] flex items-center justify-between">

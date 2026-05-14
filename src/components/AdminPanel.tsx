@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Plus, Trash2, Lock, Eye, EyeOff, Settings, ChevronDown } from "lucide-react";
-import { DEVICES, Device } from "../data/devices";
+import { X, Plus, Trash2, Lock, Eye, EyeOff, Settings, ChevronDown, BarChart3, Users, Smartphone } from "lucide-react";
+import { DEVICES } from "../data/devices";
 
 interface AdminPanelProps {
   isOpen: boolean;
   onClose: () => void;
   customRecommendations: Record<string, string[]>;
   onUpdateRecommendations: (deviceId: string, recommendations: string[]) => void;
+  stats: {
+    visits: number;
+    scans: Record<string, number>;
+  };
 }
 
-export default function AdminPanel({ isOpen, onClose, customRecommendations, onUpdateRecommendations }: AdminPanelProps) {
+export default function AdminPanel({ 
+  isOpen, 
+  onClose, 
+  customRecommendations, 
+  onUpdateRecommendations,
+  stats
+}: AdminPanelProps) {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<"modifications" | "data">("modifications");
   const [editingDevice, setEditingDevice] = useState<string | null>(null);
   const [newRecommendation, setNewRecommendation] = useState("");
 
@@ -24,6 +35,7 @@ export default function AdminPanel({ isOpen, onClose, customRecommendations, onU
       setIsAuthenticated(false);
       setError("");
       setEditingDevice(null);
+      setActiveTab("modifications");
     }
   }, [isOpen]);
 
@@ -62,12 +74,33 @@ export default function AdminPanel({ isOpen, onClose, customRecommendations, onU
         <div className="p-6 border-b border-white/10 flex items-center justify-between bg-zinc-900/50">
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-xl font-bold text-white">Panel de Modificaciones</h2>
+            <h2 className="text-xl font-bold text-white">Panel de Administración</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-white/50 hover:text-white transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {isAuthenticated && (
+          <div className="flex border-b border-white/5 bg-zinc-900/30">
+            <button 
+              onClick={() => setActiveTab("modifications")}
+              className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${
+                activeTab === "modifications" ? "text-emerald-400 bg-emerald-500/5" : "text-white/30 hover:text-white/60"
+              }`}
+            >
+              <Settings className="w-4 h-4" /> Modificaciones
+            </button>
+            <button 
+              onClick={() => setActiveTab("data")}
+              className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${
+                activeTab === "data" ? "text-emerald-400 bg-emerald-500/5" : "text-white/30 hover:text-white/60"
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" /> Datos
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {!isAuthenticated ? (
@@ -106,7 +139,7 @@ export default function AdminPanel({ isOpen, onClose, customRecommendations, onU
                 </button>
               </form>
             </div>
-          ) : (
+          ) : activeTab === "modifications" ? (
             <div className="space-y-4">
               {Object.values(DEVICES).map((device) => (
                 <div 
@@ -143,7 +176,6 @@ export default function AdminPanel({ isOpen, onClose, customRecommendations, onU
                           <div className="space-y-2 border-t border-white/5 pt-4">
                             <p className="text-[10px] font-bold text-emerald-400/60 uppercase tracking-widest">Sugerencias actuales</p>
                             
-                            {/* Original Recommendations */}
                             {device.recomendaciones.map((rec, i) => (
                               <div key={`orig-${i}`} className="flex items-start gap-3 p-3 bg-white/2 rounded-xl text-sm text-white/60">
                                 <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500/40 flex-shrink-0" />
@@ -151,7 +183,6 @@ export default function AdminPanel({ isOpen, onClose, customRecommendations, onU
                               </div>
                             ))}
 
-                            {/* Custom Recommendations */}
                             {(customRecommendations[device.id] || []).map((rec, i) => (
                               <div key={`custom-${i}`} className="flex items-start gap-3 p-3 bg-emerald-500/5 rounded-xl text-sm text-emerald-200/80 border border-emerald-500/10 group">
                                 <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
@@ -191,6 +222,51 @@ export default function AdminPanel({ isOpen, onClose, customRecommendations, onU
                   </AnimatePresence>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-2">
+                  <div className="flex items-center gap-2 text-white/40">
+                    <Users className="w-4 h-4" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Visitantes Totales</span>
+                  </div>
+                  <p className="text-4xl font-mono font-bold text-white tracking-tighter">{stats.visits}</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-2">
+                  <div className="flex items-center gap-2 text-white/40">
+                    <Smartphone className="w-4 h-4" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Escaneos Totales</span>
+                  </div>
+                  <p className="text-4xl font-mono font-bold text-emerald-400 tracking-tighter">
+                    {Object.values(stats.scans).reduce((a, b) => a + b, 0)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-1">Escaneos por Dispositivo</h4>
+                <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                  {Object.values(DEVICES).map((device, idx) => (
+                    <div 
+                      key={device.id} 
+                      className={`flex items-center justify-between p-4 ${idx !== 0 ? "border-t border-white/5" : ""}`}
+                    >
+                      <span className="text-sm text-white/80 font-medium">{device.nombre}</span>
+                      <div className="flex items-center gap-4">
+                        <div className="h-1.5 w-24 bg-white/5 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(100, (stats.scans[device.id] || 0) * 10)}%` }}
+                            className="h-full bg-emerald-500/40"
+                          />
+                        </div>
+                        <span className="text-sm font-mono font-bold text-white">{stats.scans[device.id] || 0}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
