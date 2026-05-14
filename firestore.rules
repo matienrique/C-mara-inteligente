@@ -15,15 +15,14 @@ service cloud.firestore {
       allow read: if isValidId(docId);
       
       allow create: if isValidId(docId) && 
-        request.resource.data.keys().hasAll(['visits', 'scans']) &&
-        request.resource.data.visits is number &&
-        request.resource.data.scans is map;
+        (request.resource.data.keys().hasAny(['visits', 'scans']));
 
       allow update: if isValidId(docId) &&
-        request.resource.data.visits is number &&
-        request.resource.data.scans is map &&
-        // Ensure they only increment visits or specific scan counts
-        request.resource.data.diff(resource.data).affectedKeys().hasAny(['visits', 'scans']);
+        (request.resource.data.diff(resource.data).affectedKeys().hasAny(['visits', 'scans']));
+    }
+
+    match /test/connection {
+      allow read: if true;
     }
   }
 }
