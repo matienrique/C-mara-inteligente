@@ -29,13 +29,17 @@ export default function App() {
 
   // Load custom recommendations, hidden defaults and stats from localStorage
   useEffect(() => {
-    // VISITS: Increment visit count on load
+    // VISITS & SCANS: Load and increment visit count on load
     const savedStats = localStorage.getItem("app_analytics");
-    let currentStats = { visits: 0, scans: {} as Record<string, number> };
+    let currentStats: { visits: number; scans: Record<string, number> } = { visits: 0, scans: {} };
     
     if (savedStats) {
       try {
-        currentStats = JSON.parse(savedStats);
+        const parsed = JSON.parse(savedStats);
+        currentStats = {
+          visits: typeof parsed.visits === 'number' ? parsed.visits : 0,
+          scans: parsed.scans && typeof parsed.scans === 'object' ? parsed.scans : {}
+        };
       } catch (e) {
         console.error("Error loading stats", e);
       }
@@ -43,7 +47,7 @@ export default function App() {
     
     const updatedStats = {
       ...currentStats,
-      visits: (currentStats.visits || 0) + 1
+      visits: currentStats.visits + 1
     };
     
     setStats(updatedStats);
@@ -82,12 +86,6 @@ export default function App() {
     localStorage.setItem("hidden_defaults", JSON.stringify(updated));
   };
 
-  const clearStats = () => {
-    const resetStats = { visits: 1, scans: {} as Record<string, number> };
-    setStats(resetStats);
-    localStorage.setItem("app_analytics", JSON.stringify(resetStats));
-  };
-
   const availableDevices = [
     "aire acondicionado", "heladera", "freezer", "lavarropas", "termotanques", 
     "televisor", "iluminación", "cocina", "pava eléctrica", "plancha", 
@@ -95,15 +93,20 @@ export default function App() {
   ];
 
   const handleDetection = (result: GeminiResponse) => {
-    if (DEVICES[result.detectedDevice]) {
-      const device = DEVICES[result.detectedDevice];
+    const deviceId = result.detectedDevice;
+    if (DEVICES[deviceId]) {
+      const device = DEVICES[deviceId];
       setSelectedDevice(device);
       setShowIncompatible(false);
       setError(null);
 
-      // Update scan stats using functional update
+      // Update scan stats using functional update for reliability
       setStats(prev => {
-        const updatedScans = { ...prev.scans, [device.id]: (prev.scans[device.id] || 0) + 1 };
+        const currentScans = prev.scans || {};
+        const updatedScans = { 
+          ...currentScans, 
+          [device.id]: (currentScans[device.id] || 0) + 1 
+        };
         const updated = { ...prev, scans: updatedScans };
         localStorage.setItem("app_analytics", JSON.stringify(updated));
         return updated;
