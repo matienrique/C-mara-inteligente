@@ -168,31 +168,37 @@ export default function CameraScanner({ onDetect, isAnalyzing, setIsAnalyzing }:
       </div>
 
       {/* Side Controls (Right) */}
-      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-30">
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-end gap-3 z-30">
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={handleCapture}
           disabled={isAnalyzing}
-          className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all border ${
+          className={`px-6 h-14 rounded-full flex items-center justify-center gap-2.5 shadow-2xl transition-all border font-bold text-xs uppercase tracking-widest ${
             isAnalyzing 
               ? "bg-zinc-800 text-white/50 border-white/5" 
-              : "bg-white border-emerald-500/30 hover:bg-zinc-50 group"
+              : "bg-emerald-500 text-zinc-950 border-emerald-400 hover:bg-emerald-400"
           }`}
           id="analyze-btn"
         >
           {isAnalyzing ? (
-            <RefreshCcw className="w-8 h-8 animate-spin" />
+            <>
+              <RefreshCcw className="w-4 h-4 animate-spin" />
+              <span>Analizando...</span>
+            </>
           ) : (
-            <Check className="w-8 h-8 text-emerald-500 stroke-[3]" />
+            <>
+              <Camera className="w-4 h-4" />
+              <span>Escanear</span>
+            </>
           )}
         </motion.button>
         
         <button 
           onClick={() => window.location.reload()}
-          className="w-16 h-16 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md active:scale-95 transition-all border border-white/10"
+          className="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md active:scale-95 transition-all border border-white/10"
           id="reset-btn"
         >
-          <RefreshCcw className="w-6 h-6" />
+          <RefreshCcw className="w-5 h-5" />
         </button>
       </div>
 
